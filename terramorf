@@ -25,7 +25,7 @@
 
 # Application name and version
 APPNAME=$0
-VERSION=0.1.1
+VERSION=0.2.0
 
 # Command line args
 ENVIRON=$1
@@ -56,6 +56,48 @@ if [[ -f $VARFILE_PATH && $COMMAND != "version" ]]; then
     VARFILE_ARGS=-var-file="$VARFILE_PATH"
 fi
 
+# Terraform version required, try to download and install
+TERRAFORM_CMD=terraform
+TERRAFORM_REX='^[^#]+required_version.+"'
+TERRAFORM_VER=$(grep -Eohm1 $TERRAFORM_REX *.tf | grep -Eo "[0-9.]+" || true)
+if [[ ! -z "$TERRAFORM_VER" ]]; then
+    echo "Terraform $TERRAFORM_VER required"
+
+    TERRAMORF_DIR="$HOME/.local/share/terramorf/bin"
+    TERRAFORM_BIN="$TERRAMORF_DIR/terraform-$TERRAFORM_VER"
+    if [[ ! -f $TERRAFORM_BIN ]]; then
+        OSNAME=$(uname | tr '[:upper:]' '[:lower:]')
+        MAARCH=$(uname -m)
+        if [[ "$MAARCH" = x86_64* ]]; then
+            MAARCH=amd64
+        elif [[ "$MAARCH" = i*86 ]]; then
+            MAARCH=386
+        fi
+
+        BASE_URL="https://releases.hashicorp.com/terraform/$TERRAFORM_VER"
+        FILE_URL="$BASE_URL/terraform_${TERRAFORM_VER}_${OSNAME}_${MAARCH}.zip"
+        TEMP_DIR=$(mktemp -d -t terramorf)
+        TEMP_ZIP="$TEMP_DIR/terraform.zip"
+
+        echo "Download $FILE_URL"
+        curl -so $TEMP_ZIP $FILE_URL
+        unzip -jo $TEMP_ZIP terraform -d $TEMP_DIR
+        mkdir -p $TERRAMORF_DIR
+        mv $TEMP_DIR/terraform $TERRAFORM_BIN
+        rm -rf $TEMP_DIR
+    fi
+
+    if [[ -f $TERRAFORM_BIN ]]; then
+        TERRAFORM_CMD=$TERRAFORM_BIN
+    fi
+
+    # echo $TERRAFORM_BIN
+    # echo $TERRAFORM_CMD
+    # exit
+
+    echo
+fi
+
 # Call terraform with required params
 set -x
-terraform $COMMAND $CMDARGS $BACKEND_ARGS $VARFILE_ARGS
+$TERRAFORM_CMD $COMMAND $CMDARGS $BACKEND_ARGS $VARFILE_ARGS
