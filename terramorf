@@ -52,7 +52,7 @@ if [[ -f $BACKEND_PATH && $COMMAND == "init" ]]; then
 fi
 
 # Add environment variables file
-if [[ -f $VARFILE_PATH ]]; then
+if [[ -f $VARFILE_PATH && $COMMAND != "version" ]]; then
     VARFILE_ARGS=-var-file="$VARFILE_PATH"
 fi
 
