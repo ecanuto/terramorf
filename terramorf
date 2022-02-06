@@ -1,0 +1,59 @@
+#!/usr/bin/env bash -e
+#
+#  Terramorf is a thin wrapper for Terraform
+#  Author: Everaldo Canuto <everaldo.canuto@gmail.com>
+#
+#  This is free and unencumbered software released into the public domain.
+#
+#  Anyone is free to copy, modify, publish, use, compile,  sell,  or  distribute
+#  this software, either in source code form or as a compiled  binary,  for  any
+#  purpose, commercial or non-commercial, and by any means.
+#
+#  In jurisdictions that recognize copyright laws, the author or authors of this
+#  software dedicate any and all copyright  interest  in  the  software  to  the
+#  public domain. We make this dedication for the benefit of the public at large
+#  and to the detriment of our heirs and successors. We intend  this  dedication
+#  to be an overt act of relinquishment in perpetuity of all present and  future
+#  rights to this software under copyright law.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY  KIND,  EXPRESS  OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED  TO  THE  WARRANTIES  OF  MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT  SHALL  THE
+#  AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,  WHETHER  IN  AN
+#  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN  CONNECTION
+#  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Application name and version
+APPNAME=$0
+VERSION=0.1.0
+
+# Command line args
+ENVIRON=$1
+COMMAND=$2
+CMDARGS=${@:3}
+
+# Environment files
+ENVIRON_PATH=environments
+ENVIRON_LIST=$(cd $ENVIRON_PATH ; ls *.backend.tfvars | cut -d. -f1)
+BACKEND_PATH="$ENVIRON_PATH/$ENVIRON.backend.tfvars"
+VARFILE_PATH="$ENVIRON_PATH/$ENVIRON.varfile.tfvars"
+
+# If invalid environment (not in environment list), show usage and exit
+if [[ ! $ENVIRON_LIST =~ (^|[[:space:]])$ENVIRON($|[[:space:]]) ]]; then
+    echo "Usage: $APPNAME [envivonment] <subcommand> [args]"
+    echo ""
+    echo "Avaliable environments: ${ENVIRON_LIST//$'\n'/ }"
+    exit 1
+fi
+
+#
+if [[ -f $BACKEND_PATH && $COMMAND == "init" ]]; then
+    BACKEND_ARGS="-reconfigure -backend-config=$BACKEND_PATH"
+fi
+
+#
+if [[ -f $VARFILE_PATH ]]; then
+    VARFILE_ARGS=-var-file="$VARFILE_PATH"
+fi
+
+terraform $COMMAND $CMDARGS $BACKEND_ARGS $VARFILE_ARGS
