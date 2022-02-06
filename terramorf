@@ -25,7 +25,7 @@
 
 # Application name and version
 APPNAME=$0
-VERSION=0.1.0
+VERSION=0.1.1
 
 # Command line args
 ENVIRON=$1
@@ -46,14 +46,16 @@ if [[ ! $ENVIRON_LIST =~ (^|[[:space:]])$ENVIRON($|[[:space:]]) ]]; then
     exit 1
 fi
 
-#
+# Add backend config file param for init command
 if [[ -f $BACKEND_PATH && $COMMAND == "init" ]]; then
     BACKEND_ARGS="-reconfigure -backend-config=$BACKEND_PATH"
 fi
 
-#
+# Add environment variables file
 if [[ -f $VARFILE_PATH ]]; then
     VARFILE_ARGS=-var-file="$VARFILE_PATH"
 fi
 
+# Call terraform with required params
+set -x
 terraform $COMMAND $CMDARGS $BACKEND_ARGS $VARFILE_ARGS
