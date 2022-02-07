@@ -19,9 +19,14 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/ecanuto/terramorf/main/i
 
 ## Usage
 
-TODO...
+```sh
+terramorf [envivonment] <subcommand> [args]
+```
+
+Where **envivonment** is one of the environments available on "envivonments"
+folder and all others parameters are terraform commands and arguments.
 
 ## License
 
-The code is free and unencumbered software released into the public domain.
+The code is free and unencumbered software released into the public domain.  
 For more information, please refer to <https://unlicense.org>
