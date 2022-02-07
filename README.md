@@ -4,7 +4,8 @@ Terramorf is a thin wrapper for Terraform.
 
 ## Installation
 
+You can install or upgrade Terramorf using:
+
 ```sh
-curl -o /usr/local/bin/terramorf https://raw.githubusercontent.com/ecanuto/terramorf/main/terramorf
-chmod +x /usr/local/bin/terramorf
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/ecanuto/terramorf/main/install.sh)"
 ```
