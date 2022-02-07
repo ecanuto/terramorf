@@ -91,10 +91,6 @@ if [[ ! -z "$TERRAFORM_VER" ]]; then
         TERRAFORM_CMD=$TERRAFORM_BIN
     fi
 
-    # echo $TERRAFORM_BIN
-    # echo $TERRAFORM_CMD
-    # exit
-
     echo
 fi
 
