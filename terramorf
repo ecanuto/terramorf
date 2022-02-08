@@ -1,4 +1,4 @@
-#!/usr/bin/env bash -e
+#!/usr/bin/env bash
 #
 #  Terramorf is a thin wrapper for Terraform
 #  Author: Everaldo Canuto <everaldo.canuto@gmail.com>
@@ -23,9 +23,11 @@
 #  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN  CONNECTION
 #  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+set -e
+
 # Application name and version
 APPNAME=terramorf
-VERSION=0.2.1
+VERSION=0.2.2
 
 # Command line args
 ENVIRON=$1
