@@ -36,12 +36,14 @@ CMDARGS=${@:3}
 
 # Environment files
 ENVIRON_PATH=environments
-ENVIRON_LIST=$(cd $ENVIRON_PATH ; ls *.backend.tfvars | cut -d. -f1)
-BACKEND_PATH="$ENVIRON_PATH/$ENVIRON.backend.tfvars"
-VARFILE_PATH="$ENVIRON_PATH/$ENVIRON.varfile.tfvars"
+if [[ -d $ENVIRON_PATH ]]; then
+    ENVIRON_LIST=$(ls -d $ENVIRON_PATH/*/ | cut -d/ -f2)
+    BACKEND_PATH="$ENVIRON_PATH/$ENVIRON/backend.config"
+    VARFILE_PATH="$ENVIRON_PATH/$ENVIRON/variables.tfvars"
+fi
 
 # If invalid environment (not in environment list), show usage and exit
-if [[ ! $ENVIRON_LIST =~ (^|[[:space:]])$ENVIRON($|[[:space:]]) ]]; then
+if [[ ! -d "$ENVIRON_PATH/$ENVIRON" ]]; then
     echo "Usage: $APPNAME [envivonment] <subcommand> [args]"
     echo ""
     echo "Avaliable environments: ${ENVIRON_LIST//$'\n'/ }"
