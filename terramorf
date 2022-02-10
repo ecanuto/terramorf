@@ -27,36 +27,38 @@ set -e
 
 # Application name and version
 APPNAME=terramorf
-VERSION=0.2.2
-
-# Command line args
-ENVIRON=$1
-COMMAND=$2
-CMDARGS=${@:3}
+VERSION=0.3.0
 
 # Environment files
-ENVIRON_PATH=environments
-if [[ -d $ENVIRON_PATH ]]; then
-    ENVIRON_LIST=$(ls -d $ENVIRON_PATH/*/ | cut -d/ -f2)
-    BACKEND_PATH="$ENVIRON_PATH/$ENVIRON/backend.config"
-    VARFILE_PATH="$ENVIRON_PATH/$ENVIRON/variables.tfvars"
+ENVIRON_BASE=environments
+if [[ -d "$ENVIRON_BASE" ]]; then
+    ENVIRON_NAME=$1 ; shift || true
+    ENVIRON_LIST=$(ls -d $ENVIRON_BASE/*/ | cut -d/ -f2)
+    ENVIRON_PATH="$ENVIRON_BASE/$ENVIRON_NAME"
+    BACKEND_PATH="$ENVIRON_PATH/backend.config"
+    VARFILE_PATH="$ENVIRON_PATH/variables.tfvars"
 fi
 
-# If invalid environment (not in environment list), show usage and exit
-if [[ ! -d "$ENVIRON_PATH/$ENVIRON" ]]; then
-    echo "Usage: $APPNAME [envivonment] <subcommand> [args]"
+# Command line args
+COMMAND_NAME=$1
+COMMAND_ARGS=${@:2}
+
+# Show usage if incorrect arguments
+if [[ -z "$COMMAND_NAME" || -n "$ENVIRON_NAME" && ! -d "$ENVIRON_PATH" ]]; then
+    echo "Usage: $APPNAME <subcommand> [args]"
+    echo "       $APPNAME [envivonment] <subcommand> [args]"
     echo ""
     echo "Avaliable environments: ${ENVIRON_LIST//$'\n'/ }"
     exit 1
 fi
 
 # Add backend config file param for init command
-if [[ -f $BACKEND_PATH && $COMMAND == "init" ]]; then
+if [[ -f $BACKEND_PATH && $COMMAND_NAME == "init" ]]; then
     BACKEND_ARGS="-reconfigure -backend-config=$BACKEND_PATH"
 fi
 
 # Add environment variables file
-if [[ -f $VARFILE_PATH && $COMMAND != "version" ]]; then
+if [[ -f $VARFILE_PATH && $COMMAND_NAME != "version" ]]; then
     VARFILE_ARGS=-var-file="$VARFILE_PATH"
 fi
 
@@ -100,4 +102,4 @@ fi
 
 # Call terraform with required params
 set -x
-$TERRAFORM_CMD $COMMAND $CMDARGS $BACKEND_ARGS $VARFILE_ARGS
+$TERRAFORM_CMD $COMMAND_NAME $COMMAND_ARGS $BACKEND_ARGS $VARFILE_ARGS
