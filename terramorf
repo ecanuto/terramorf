@@ -27,7 +27,7 @@ set -e
 
 # Application name and version
 APPNAME=terramorf
-VERSION=0.3.0
+VERSION=0.3.2
 
 # Environment files
 ENVIRON_BASE=environments
