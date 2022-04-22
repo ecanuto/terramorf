@@ -82,7 +82,7 @@ if [[ ! -z "$TERRAFORM_VER" ]]; then
 
         BASE_URL="https://releases.hashicorp.com/terraform/$TERRAFORM_VER"
         FILE_URL="$BASE_URL/terraform_${TERRAFORM_VER}_${OSNAME}_${MAARCH}.zip"
-        TEMP_DIR=$(mktemp -d -t terramorf)
+        TEMP_DIR=$(mktemp -d -t terramorf.XXX)
         TEMP_ZIP="$TEMP_DIR/terraform.zip"
 
         echo "Download $FILE_URL"
