@@ -2,7 +2,7 @@
 #
 #  Terramorf setup script
 #  Terramorf is a thin wrapper for Terraform
-#  Author: Everaldo Canuto <everaldo.canuto@gmail.com>
+#  Copyright waived 2022, Everaldo Canuto <everaldo.canuto@gmail.com>
 #
 
 GITHUBRAW_URL="https://raw.githubusercontent.com"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 #  Terramorf is a thin wrapper for Terraform
-#  Author: Everaldo Canuto <everaldo.canuto@gmail.com>
+#  Copyright waived 2022, Everaldo Canuto <everaldo.canuto@gmail.com>
 #
 #  This is free and unencumbered software released into the public domain.
 #
