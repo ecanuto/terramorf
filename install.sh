@@ -1,9 +1,11 @@
-#!/usr/bin/env bash -e
+#!/usr/bin/env bash
 #
 #  Terramorf setup script
 #  Terramorf is a thin wrapper for Terraform
 #  Copyright waived 2022, Everaldo Canuto <everaldo.canuto@gmail.com>
 #
+
+set -e
 
 GITHUBRAW_URL="https://raw.githubusercontent.com"
 TERRAMORF_URL="$GITHUBRAW_URL/ecanuto/terramorf/main/terramorf"
