@@ -27,13 +27,18 @@ set -e
 
 # Application name and version
 APPNAME=terramorf
-VERSION=0.3.2
+VERSION=0.4.0
+
+# Search for environments folder
+ENVIRON_BASE=environments
+while [ ! -d "$ENVIRON_BASE" ] && [ "$(readlink -f "${ENVIRON_BASE%/*}")" != "/" ]; do
+    ENVIRON_BASE="../${ENVIRON_BASE}"
+done
 
 # Environment files
-ENVIRON_BASE=environments
 if [[ -d "$ENVIRON_BASE" ]]; then
     ENVIRON_NAME=$1 ; shift || true
-    ENVIRON_LIST=$(ls -d $ENVIRON_BASE/*/ | cut -d/ -f2)
+    ENVIRON_LIST=$(cd $ENVIRON_BASE ; ls -d */ | cut -d/ -f1)
     ENVIRON_PATH="$ENVIRON_BASE/$ENVIRON_NAME"
     BACKEND_PATH="$ENVIRON_PATH/backend.config"
     VARFILE_PATH="$ENVIRON_PATH/variables.tfvars"
