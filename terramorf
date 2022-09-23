@@ -51,7 +51,7 @@ COMMAND_ARGS=${@:2}
 # Show usage if incorrect arguments
 if [[ -z "$COMMAND_NAME" || -n "$ENVIRON_NAME" && ! -d "$ENVIRON_PATH" ]]; then
     echo "Usage: $APPNAME <subcommand> [args]"
-    echo "       $APPNAME [envivonment] <subcommand> [args]"
+    echo "       $APPNAME [environment] <subcommand> [args]"
     echo ""
     echo "Avaliable environments: ${ENVIRON_LIST//$'\n'/ }"
     exit 1
