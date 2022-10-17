@@ -6,7 +6,7 @@ setup.
 
 ## Features
 
-* Enrironment variable management
+* Enrironments management for variables and backend
 * Automatic terraform version download, setup and management
 
 ## Installation
@@ -18,6 +18,42 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/ecanuto/terramorf/main/i
 ```
 
 ## Usage
+
+terramorf.hcl
+```terraform
+terraform {
+  required_version = "1.2.5"
+
+  backend {
+    profile = "company-${environment}"
+    region  = "eu-west-1"
+    bucket  = "terraform-${environment}"
+    key     = "${module}/terraform.tfstate"
+    encrypt = false
+  }
+
+  var_files = [
+    "../common/${environment}.tfvars"
+  ]
+
+  variables {
+    somevar = "somevalue"
+  }
+}
+
+environment "dev" {
+
+  variables {
+    some_env_var = "somevalue devel"
+  }
+}
+
+environment "prd" {
+  variables {
+    some_env_var = "somevalue prod"
+  }
+}
+```
 
 ```sh
 terramorf [envivonment] <subcommand> [args]
