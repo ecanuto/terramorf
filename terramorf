@@ -23,88 +23,167 @@
 #  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN  CONNECTION
 #  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# shellcheck disable=SC2206,SC2207,SC2076
+
 set -e
 
 # Application name and version
 APPNAME=terramorf
-VERSION=0.4.0
+VERSION=0.5.0
 
-# Search for environments folder
-ENVIRON_BASE=environments
-while [ ! -d "$ENVIRON_BASE" ] && [ "$(readlink -f "${ENVIRON_BASE%/*}")" != "/" ]; do
-    ENVIRON_BASE="../${ENVIRON_BASE}"
-done
+TERRAMORF_BASEPATH=".terraform/terramorf"
+TERRAMORF_BASEFILE="terramorf.hcl"
+TERRAMORF_FILENAME="${TERRAMORF_BASEPATH}/${TERRAMORF_BASEFILE}"
+TERRAMORF_SETTINGS="${TERRAMORF_BASEPATH}/environment.hcl"
+TERRAMORF_BACKFILE="${TERRAMORF_BASEPATH}/terramorf.tfbackend"
+TERRAMORF_VARSFILE="${TERRAMORF_BASEPATH}/terramorf.tfvars"
 
-# Environment files
-if [[ -d "$ENVIRON_BASE" ]]; then
-    ENVIRON_NAME=$1 ; shift || true
-    ENVIRON_LIST=$(cd $ENVIRON_BASE ; ls -d */ | cut -d/ -f1)
-    ENVIRON_PATH="$ENVIRON_BASE/$ENVIRON_NAME"
-    BACKEND_PATH="$ENVIRON_PATH/backend.config"
-    VARFILE_PATH="$ENVIRON_PATH/variables.tfvars"
+function hcl_get_values() {
+    sed -nr "s/^[[:blank:]]*$1[ =]*\"(.+)\".*/\1/p" "$2"
+}
+
+function hcl_get_value() {
+    hcl_get_values "$1" "$2" | head -n1
+}
+
+function hcl_get_environment() {
+    ini_pattern="^terraform {$"
+    end_pattern="^}$"
+    sed -n "/$ini_pattern/,/$end_pattern/p" "$2"
+
+    ini_pattern="^environment \"$1\" {$"
+    end_pattern="^}$"
+    sed -n "/$ini_pattern/,/$end_pattern/p" "$2"
+}
+
+function hcl_get_block() {
+    ini_pattern="^  $1 {$"
+    end_pattern="^  }$"
+    sed -e "/$ini_pattern/,/$end_pattern/!d;//d" "$2"
+}
+
+function hcl_get_list() {
+    ini_pattern="^[[:blank:]]*$1[[:blank:]]*=[[:blank:]]*\[[[:blank:]]*$"
+    end_pattern="^[[:blank:]]*\][[:blank:]]*$"
+    sed -e "/$ini_pattern/,/$end_pattern/!d;//d" "$2"
+}
+
+function hcl_get_required_version() {
+    sed -nr 's/^[[:blank:]]*required_version[^0-9]*([0-9\.]+).*/\1/p;' "$1"
+}
+
+function tf_fmt() {
+    $terraform_cmd fmt -
+}
+
+function tf_download() {
+    terramorf_dir="$HOME/.local/share/terramorf/bin"
+    terraform_bin="$terramorf_dir/terraform-$1"
+    if [[ ! -f $terraform_bin ]]; then
+        osname=$(uname | tr '[:upper:]' '[:lower:]')
+        maarch=$(uname -m)
+        if [[ "$maarch" = x86_64* ]]; then
+            maarch=amd64
+        elif [[ "$maarch" = i*86 ]]; then
+            maarch=386
+        fi
+
+        base_url="https://releases.hashicorp.com/terraform/$1"
+        file_url="$base_url/terraform_${1}_${osname}_${maarch}.zip"
+        temp_dir=$(mktemp -d -t terramorf.XXX)
+        temp_zip="$temp_dir/terraform.zip"
+
+        echo "Download $file_url"
+        curl -so "$temp_zip" "$file_url"
+        unzip -jo "$temp_zip" terraform -d "$temp_dir"
+        mkdir -p "$terramorf_dir"
+        mv "$temp_dir/terraform" "$terraform_bin"
+        rm -rf "$temp_dir"
+    fi
+
+    if [[ -f $terraform_bin ]]; then
+        terraform_cmd=$terraform_bin
+    fi
+}
+
+## Main ##
+
+# Environments
+if [[ -f "$TERRAMORF_BASEFILE" ]]; then
+    environment=$1 ; shift || true
+    environlist=( $(hcl_get_values 'environment' $TERRAMORF_BASEFILE) )
 fi
 
 # Command line args
-COMMAND_NAME=$1
-COMMAND_ARGS=${@:2}
+command_name=$1
+command_args=(${@:2})
 
-# Show usage if incorrect arguments
-if [[ -z "$COMMAND_NAME" || -n "$ENVIRON_NAME" && ! -d "$ENVIRON_PATH" ]]; then
+# Show usage if incorrect arguments or invalid environment
+if [[ -z "$command_name" || ! " ${environlist[*]} " =~ " $environment " ]]; then
     echo "Usage: $APPNAME <subcommand> [args]"
     echo "       $APPNAME [environment] <subcommand> [args]"
     echo ""
-    echo "Avaliable environments: ${ENVIRON_LIST//$'\n'/ }"
+    echo "Avaliable environments: ${environlist[*]}"
     exit 1
 fi
 
-# Add backend config file param for init command
-if [[ -f $BACKEND_PATH && $COMMAND_NAME == "init" ]]; then
-    BACKEND_ARGS="-reconfigure -backend-config=$BACKEND_PATH"
-fi
-
-# Add environment variables file
-if [[ -f $VARFILE_PATH && $COMMAND_NAME != "version" ]]; then
-    VARFILE_ARGS=-var-file="$VARFILE_PATH"
+# Try to get Terraform required version from terramorf.hcl and
+# if not available try required_version on *.tf
+terraform_cmd=terraform
+terraform_ver=$(hcl_get_required_version $TERRAMORF_BASEFILE)
+if [[ -z "$terraform_ver" ]]; then
+    terraform_ver=$(hcl_get_required_version ./*.tf)
 fi
 
 # Terraform version required, try to download and install
-TERRAFORM_CMD=terraform
-TERRAFORM_REX='^[^#]+required_version.+"'
-TERRAFORM_VER=$(grep -Eohm1 $TERRAFORM_REX *.tf | grep -Eo "[0-9.]+" || true)
-if [[ ! -z "$TERRAFORM_VER" ]]; then
-    echo "Terraform $TERRAFORM_VER required"
-
-    TERRAMORF_DIR="$HOME/.local/share/terramorf/bin"
-    TERRAFORM_BIN="$TERRAMORF_DIR/terraform-$TERRAFORM_VER"
-    if [[ ! -f $TERRAFORM_BIN ]]; then
-        OSNAME=$(uname | tr '[:upper:]' '[:lower:]')
-        MAARCH=$(uname -m)
-        if [[ "$MAARCH" = x86_64* ]]; then
-            MAARCH=amd64
-        elif [[ "$MAARCH" = i*86 ]]; then
-            MAARCH=386
-        fi
-
-        BASE_URL="https://releases.hashicorp.com/terraform/$TERRAFORM_VER"
-        FILE_URL="$BASE_URL/terraform_${TERRAFORM_VER}_${OSNAME}_${MAARCH}.zip"
-        TEMP_DIR=$(mktemp -d -t terramorf.XXX)
-        TEMP_ZIP="$TEMP_DIR/terraform.zip"
-
-        echo "Download $FILE_URL"
-        curl -so $TEMP_ZIP $FILE_URL
-        unzip -jo $TEMP_ZIP terraform -d $TEMP_DIR
-        mkdir -p $TERRAMORF_DIR
-        mv $TEMP_DIR/terraform $TERRAFORM_BIN
-        rm -rf $TEMP_DIR
-    fi
-
-    if [[ -f $TERRAFORM_BIN ]]; then
-        TERRAFORM_CMD=$TERRAFORM_BIN
-    fi
-
+if [[ -n "$terraform_ver" ]]; then
+    echo "Terraform $terraform_ver required"
+    tf_download "$terraform_ver"
     echo
+fi
+
+# Check syntax and generate formated terraform.hcl file
+if [[ $TERRAMORF_BASEFILE -nt $TERRAMORF_FILENAME ]]; then
+    mkdir -p $TERRAMORF_BASEPATH
+    cat $TERRAMORF_BASEFILE | tf_fmt - > $TERRAMORF_FILENAME
+fi
+
+# Creates environment settings file if needed
+if [[ $TERRAMORF_FILENAME -nt $TERRAMORF_SETTINGS || $command_name == "init" ]]; then
+    hcl_get_environment "$environment" $TERRAMORF_FILENAME > $TERRAMORF_SETTINGS
+fi
+
+# Backend settings
+if [[ $command_name == "init" ]]; then
+    # Creates backend config file from environment settings file
+    if [[ $TERRAMORF_SETTINGS -nt $TERRAMORF_BACKFILE ]]; then
+        hcl_get_block "backend" $TERRAMORF_SETTINGS | tf_fmt > $TERRAMORF_BACKFILE
+    fi
+
+    # Terraform backend config args
+    if [[ -s "$TERRAMORF_BACKFILE" ]]; then
+        command_args+=("-reconfigure" "-backend-config=$TERRAMORF_BACKFILE")
+    fi
+fi
+
+# Include var-files
+for file in $(hcl_get_list "var_files" $TERRAMORF_SETTINGS); do
+    if ! [[ $file =~ ^[[:space:]]*#.* ]]; then
+        file=$(eval echo "${file%,}")
+        command_args+=("-var-file=$file")
+    fi
+done
+
+# Creates variables file from environment settings file
+if [[ $TERRAMORF_SETTINGS -nt $TERRAMORF_VARSFILE ]]; then
+    hcl_get_block "variables" $TERRAMORF_SETTINGS | tf_fmt > $TERRAMORF_VARSFILE
+fi
+
+# Terraform var-file argument
+if [[ -s "$TERRAMORF_VARSFILE" && $command_name != "version" ]]; then
+    command_args+=("-var-file=$TERRAMORF_VARSFILE")
 fi
 
 # Call terraform with required params
 set -x
-$TERRAFORM_CMD $COMMAND_NAME $COMMAND_ARGS $BACKEND_ARGS $VARFILE_ARGS
+$terraform_cmd "$command_name" "${command_args[@]}"
