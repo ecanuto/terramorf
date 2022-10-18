@@ -29,7 +29,7 @@ set -e
 
 # Application name and version
 APPNAME=terramorf
-VERSION=0.5.0
+VERSION=0.5.1
 
 TERRAMORF_BASEPATH=".terraform/terramorf"
 TERRAMORF_BASEFILE="terramorf.hcl"
@@ -74,6 +74,10 @@ function hcl_get_required_version() {
 
 function tf_fmt() {
     $terraform_cmd fmt -
+}
+
+function tf_subst() {
+    (export environment ; tf_fmt | envsubst)
 }
 
 function tf_download() {
@@ -157,7 +161,7 @@ fi
 if [[ $command_name == "init" ]]; then
     # Creates backend config file from environment settings file
     if [[ $TERRAMORF_SETTINGS -nt $TERRAMORF_BACKFILE ]]; then
-        hcl_get_block "backend" $TERRAMORF_SETTINGS | tf_fmt > $TERRAMORF_BACKFILE
+        hcl_get_block "backend" $TERRAMORF_SETTINGS | tf_subst > $TERRAMORF_BACKFILE
     fi
 
     # Terraform backend config args
