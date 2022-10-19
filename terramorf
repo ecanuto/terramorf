@@ -152,7 +152,7 @@ fi
 # Check syntax and generate formated terraform.hcl file
 if [[ $TERRAMORF_BASEFILE -nt $TERRAMORF_FILENAME ]]; then
     mkdir -p $TERRAMORF_BASEPATH
-    cat $TERRAMORF_BASEFILE | tf_fmt - > $TERRAMORF_FILENAME
+    sed 's/\r//' $TERRAMORF_BASEFILE | tf_fmt - > $TERRAMORF_FILENAME
 fi
 
 # Creates environment settings file if needed
