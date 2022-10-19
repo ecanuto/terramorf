@@ -90,6 +90,8 @@ function tf_download() {
             maarch=amd64
         elif [[ "$maarch" = i*86 ]]; then
             maarch=386
+        elif [[ "$maarch" = aarch64 ]]; then
+            maarch=arm64
         fi
 
         base_url="https://releases.hashicorp.com/terraform/$1"
