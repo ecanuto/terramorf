@@ -29,7 +29,7 @@ set -e
 
 # Application name and version
 APPNAME=terramorf
-VERSION=0.5.2
+VERSION=0.5.4
 
 TERRAMORF_BASEPATH=".terraform/terramorf"
 TERRAMORF_BASEFILE="terramorf.hcl"
