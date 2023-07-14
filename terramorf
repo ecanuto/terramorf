@@ -125,6 +125,12 @@ command_name=$1
 command_opts=(${@:2})
 command_args=()
 
+# Display version for "--version" command line argument
+if [[ $1 == "--version" ]]; then
+    echo "terramorf ${VERSION}"
+    exit
+fi
+
 # Show usage if incorrect arguments or invalid environment
 if [[ -z "$command_name" || ! " ${environlist[*]} " =~ " $environment " ]]; then
     echo "Usage: $APPNAME <subcommand> [args]"
