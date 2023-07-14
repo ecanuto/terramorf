@@ -193,7 +193,7 @@ if [[ $TERRAMORF_SETTINGS -nt $TERRAMORF_VARSFILE ]]; then
 fi
 
 # Terraform var-file argument
-IGNORE_VARSFILE=("version" "validate")
+IGNORE_VARSFILE=("version" "fmt" "validate" "output")
 
 if [[ -s "$TERRAMORF_VARSFILE" && ! "${IGNORE_VARSFILE[*]}" =~ $command_name ]]; then
     command_args+=("-var-file=$TERRAMORF_VARSFILE")
