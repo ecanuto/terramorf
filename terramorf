@@ -179,24 +179,27 @@ if [[ $command_name == "init" ]]; then
     fi
 fi
 
-# Include var-files
-for file in $(hcl_get_list "var_files" $TERRAMORF_SETTINGS); do
-    if ! [[ $file =~ ^[[:space:]]*#.* ]]; then
-        file=$(eval echo "${file%,}")
-        command_args+=("-var-file=$file")
-    fi
-done
-
-# Creates variables file from environment settings file
-if [[ $TERRAMORF_SETTINGS -nt $TERRAMORF_VARSFILE ]]; then
-    hcl_get_block "variables" $TERRAMORF_SETTINGS | tf_fmt > $TERRAMORF_VARSFILE
-fi
-
-# Terraform var-file argument
+# Commands that does not support var-file as argument
 IGNORE_VARSFILE=("version" "fmt" "validate" "output")
 
-if [[ -s "$TERRAMORF_VARSFILE" && ! "${IGNORE_VARSFILE[*]}" =~ $command_name ]]; then
-    command_args+=("-var-file=$TERRAMORF_VARSFILE")
+if [[ ! "${IGNORE_VARSFILE[*]}" =~ $command_name ]]; then
+    # Include var-files
+    for file in $(hcl_get_list "var_files" $TERRAMORF_SETTINGS); do
+        if ! [[ $file =~ ^[[:space:]]*#.* ]]; then
+            file=$(eval echo "${file%,}")
+            command_args+=("-var-file=$file")
+        fi
+    done
+
+    # Create variables file from environment settings
+    if [[ $TERRAMORF_SETTINGS -nt $TERRAMORF_VARSFILE ]]; then
+        hcl_get_block "variables" $TERRAMORF_SETTINGS | tf_fmt > $TERRAMORF_VARSFILE
+    fi
+
+    # Include var-file generated from environment settings
+    if [[ -s "$TERRAMORF_VARSFILE" ]]; then
+        command_args+=("-var-file=$TERRAMORF_VARSFILE")
+    fi
 fi
 
 # Call terraform with required params
