@@ -8,7 +8,7 @@
 set -e
 
 GITHUBRAW_URL="https://raw.githubusercontent.com"
-TERRAMORF_URL="$GITHUBRAW_URL/ecanuto/terramorf/main/terramorf"
+TERRAMORF_URL="$GITHUBRAW_URL/noverde/terramorf/main/terramorf"
 TERRAMORF_BIN="/usr/local/bin/terramorf"
 
 echo "Downloading terramorf..."
